@@ -13,14 +13,14 @@ struct Rect
     Rect(T x, T y, T width, T height) : x(x), y(y), width(width), height(height) { }
 };
 
-template <typename R>
+template <typename T>
 struct Point
 {
-    R x;
-    R y;
+    T x;
+    T y;
 
     Point() = default;
-    Point(R x, R y) : x(x), y(y) { }
+    Point(T x, T y) : x(x), y(y) { }
 };
 
 #endif

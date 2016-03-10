@@ -9,7 +9,7 @@ class TouchpadManager : private _ISynDeviceEvents
 public:
     bool Initialize(Rect<int> screenRect);
     bool Acquire();
-    void Unacquire();
+    bool Unacquire();
     void SetTouchpadEnabled(bool enabled);
     Rect<long> GetDefaultTouchpadRect();
     void SetTouchpadRect(Rect<long> rect);

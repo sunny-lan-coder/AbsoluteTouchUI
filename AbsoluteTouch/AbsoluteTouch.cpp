@@ -2,8 +2,8 @@
 #include "Containers.h"
 #include <iostream>
 
-TouchpadManager tm;
-bool manageTouchpad;
+TouchpadManager *tm = NULL;
+bool touchpadEnabledModified = false;
 
 void usage()
 {
@@ -17,11 +17,15 @@ void cleanup()
 {
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << "Exiting..." << std::endl;
-    tm.Unacquire();
-    std::cout << "Released exclusive touchpad access" << std::endl;
-    if (manageTouchpad) {
-        tm.SetTouchpadEnabled(false);
-        std::cout << "Disabled touchpad" << std::endl;
+    if (tm) {
+        if (touchpadEnabledModified) {
+            tm->SetTouchpadEnabled(false);
+            std::cout << "Disabled touchpad" << std::endl;
+        }
+        if (tm->Unacquire()) {
+            std::cout << "Released exclusive touchpad access" << std::endl;
+        }
+        delete tm;
     }
 }
 
@@ -35,9 +39,9 @@ BOOL WINAPI onexit(DWORD signal)
 int main(int argc, char *argv[])
 {
     // Parse command-line args
-    manageTouchpad = false;
     int forceWidth = 0;
     int forceHeight = 0;
+    bool manageTouchpad = false;
     for (int i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "-w") && i < argc - 1) {
             forceWidth = atoi(argv[++i]);
@@ -56,34 +60,42 @@ int main(int argc, char *argv[])
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << "Starting..." << std::endl;
 
+    // Heap-alloc to allow custom lifecycle management
+    tm = new TouchpadManager;
+
     // Get screen dimensions
     int screenWidth = forceWidth > 0 ? forceWidth : GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = forceHeight > 0 ? forceHeight : GetSystemMetrics(SM_CYSCREEN);
     Rect<int> screenRect(0, 0, screenWidth, screenHeight);
 
     // Initialize touchpad manager
-    if (!tm.Initialize(screenRect)) {
+    if (!tm->Initialize(screenRect)) {
         std::cerr << "Error: could not initialize touchpad manager" << std::endl;
+        cleanup();
         return 1;
     }
     std::cout << "Initialized touchpad manager" << std::endl;
 
-    // Enable touchpad if -t flag was specified
-    if (manageTouchpad) {
-        tm.SetTouchpadEnabled(true);
-        std::cout << "Enabled touchpad" << std::endl;
-    }
-
     // Acquire exclusive touchpad access
-    if (!tm.Acquire()) {
+    if (!tm->Acquire()) {
         std::cerr << "Error: could not acquire exclusive touchpad access" << std::endl;
+        cleanup();
         return 1;
     }
     std::cout << "Acquired exclusive touchpad access" << std::endl;
 
+    // Enable touchpad if -t flag was specified
+    if (manageTouchpad) {
+        tm->SetTouchpadEnabled(true);
+        touchpadEnabledModified = true;
+        std::cout << "Enabled touchpad" << std::endl;
+    }
+
     // Set cleanup handler
     if (!SetConsoleCtrlHandler(onexit, TRUE)) {
         std::cerr << "Error: failed to register console control handler" << std::endl;
+        cleanup();
+        return 1;
     }
     std::cout << "Registered console control handler" << std::endl;
 

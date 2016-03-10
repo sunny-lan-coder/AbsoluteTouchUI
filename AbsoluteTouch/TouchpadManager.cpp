@@ -10,20 +10,20 @@ bool TouchpadManager::Initialize(Rect<int> screenRect)
     if (res != S_OK && res != S_FALSE)
         return false;
     m_coinitialized = true;
-    if (CoCreateInstance(_uuidof(SynAPI), 0, CLSCTX_INPROC_SERVER, _uuidof(ISynAPI), (void **)&m_api))
+    if (CoCreateInstance(_uuidof(SynAPI), NULL, CLSCTX_INPROC_SERVER, _uuidof(ISynAPI), (void **)&m_api) != S_OK)
         return false;
-    if (m_api->Initialize())
+    if (m_api->Initialize() != SYN_OK)
         return false;
-    long lHandle = -1;
-    if (m_api->FindDevice(SE_ConnectionAny, SE_DeviceTouchPad, &lHandle))
+    long handle = -1;
+    if (m_api->FindDevice(SE_ConnectionAny, SE_DeviceTouchPad, &handle) != SYN_OK)
         return false;
-    if (m_api->CreateDevice(lHandle, &m_device))
+    if (m_api->CreateDevice(handle, &m_device) != SYN_OK)
         return false;
-    if (m_device->CreatePacket(&m_packet))
+    if (m_device->CreatePacket(&m_packet) != SYN_OK)
         return false;
-    m_initialized = true;
     SetTouchpadRect(GetDefaultTouchpadRect());
     SetScreenRect(screenRect);
+    m_initialized = true;
     return true;
 }
 
@@ -38,16 +38,17 @@ bool TouchpadManager::Acquire()
     return true;
 }
 
-void TouchpadManager::Unacquire()
+bool TouchpadManager::Unacquire()
 {
     assert(m_initialized);
     if (!m_acquired)
-        return;
+        return false;
     HRESULT res = m_device->Unacquire();
     assert(res == SYN_OK);
     res = m_device->SetSynchronousNotification(NULL);
     assert(res == SYN_OK);
     m_acquired = false;
+    return true;
 }
 
 void TouchpadManager::SetTouchpadEnabled(bool enabled)
@@ -60,10 +61,7 @@ void TouchpadManager::SetTouchpadEnabled(bool enabled)
 Rect<long> TouchpadManager::GetDefaultTouchpadRect()
 {
     assert(m_initialized);
-    long minX;
-    long maxX;
-    long minY;
-    long maxY;
+    long minX, maxX, minY, maxY;
     m_device->GetProperty(SP_XLoBorder, &minX);
     m_device->GetProperty(SP_XHiBorder, &maxX);
     m_device->GetProperty(SP_YLoBorder, &minY);
@@ -116,10 +114,10 @@ TouchpadManager::~TouchpadManager()
 {
     if (m_initialized) {
         Unacquire();
-        if (m_packet) m_packet->Release();
-        if (m_device) m_device->Release();
-        if (m_api) m_api->Release();
     }
+    if (m_packet) m_packet->Release();
+    if (m_device) m_device->Release();
+    if (m_api) m_api->Release();
     if (m_coinitialized) {
         CoUninitialize();
     }
