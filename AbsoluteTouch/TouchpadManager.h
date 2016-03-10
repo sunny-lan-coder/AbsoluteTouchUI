@@ -20,9 +20,9 @@ private:
     Point<int> TouchpadToScreenCoords(long touchpadX, long touchpadY);
     HRESULT STDMETHODCALLTYPE OnSynDevicePacket(long seqNum) override;
 
-    ISynAPI *m_api;
-    ISynDevice *m_device;
-    ISynPacket *m_packet;
+    ISynAPI *m_api = NULL;
+    ISynDevice *m_device = NULL;
+    ISynPacket *m_packet = NULL;
     Rect<long> m_touchpadRect;
     Rect<int> m_screenRect;
     bool m_initialized = false;

@@ -31,7 +31,7 @@ bool TouchpadManager::Acquire()
     assert(m_initialized);
     HRESULT res = m_device->SetSynchronousNotification(this);
     assert(res == SYN_OK);
-    if (m_device->Acquire(0))
+    if (m_device->Acquire(0) != SYN_OK)
         return false;
     m_acquired = true;
     return true;
