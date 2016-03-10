@@ -5,7 +5,7 @@
 
 bool TouchpadManager::Initialize(Rect<int> screenRect)
 {
-    assert(!m_initialized);
+    assert(!m_coinitialized);
     HRESULT res = CoInitialize(NULL);
     if (res != S_OK && res != S_FALSE)
         return false;

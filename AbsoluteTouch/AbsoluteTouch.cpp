@@ -2,8 +2,10 @@
 #include "Containers.h"
 #include <iostream>
 
-TouchpadManager *tm = NULL;
-bool touchpadEnabledModified = false;
+#define VERSION_NAME "1.0.1"
+
+TouchpadManager *g_touchpadManager = NULL;
+bool g_touchpadEnabledModified = false;
 
 void usage()
 {
@@ -17,15 +19,15 @@ void cleanup()
 {
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << "Exiting..." << std::endl;
-    if (tm) {
-        if (touchpadEnabledModified) {
-            tm->SetTouchpadEnabled(false);
+    if (g_touchpadManager) {
+        if (g_touchpadEnabledModified) {
+            g_touchpadManager->SetTouchpadEnabled(false);
             std::cout << "Disabled touchpad" << std::endl;
         }
-        if (tm->Unacquire()) {
+        if (g_touchpadManager->Unacquire()) {
             std::cout << "Released exclusive touchpad access" << std::endl;
         }
-        delete tm;
+        delete g_touchpadManager;
     }
 }
 
@@ -55,13 +57,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "AbsoluteTouch" << std::endl;
+    // Print init info
+    std::cout << "AbsoluteTouch v" << VERSION_NAME << std::endl;
+    std::cout << "Author: crossbowffs" << std::endl;
     std::cout << "Project page: https://github.com/apsun/AbsoluteTouch" << std::endl;
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << "Starting..." << std::endl;
 
     // Heap-alloc to allow custom lifecycle management
-    tm = new TouchpadManager;
+    g_touchpadManager = new TouchpadManager;
 
     // Get screen dimensions
     int screenWidth = forceWidth > 0 ? forceWidth : GetSystemMetrics(SM_CXSCREEN);
@@ -69,7 +73,7 @@ int main(int argc, char *argv[])
     Rect<int> screenRect(0, 0, screenWidth, screenHeight);
 
     // Initialize touchpad manager
-    if (!tm->Initialize(screenRect)) {
+    if (!g_touchpadManager->Initialize(screenRect)) {
         std::cerr << "Error: could not initialize touchpad manager" << std::endl;
         cleanup();
         return 1;
@@ -77,7 +81,7 @@ int main(int argc, char *argv[])
     std::cout << "Initialized touchpad manager" << std::endl;
 
     // Acquire exclusive touchpad access
-    if (!tm->Acquire()) {
+    if (!g_touchpadManager->Acquire()) {
         std::cerr << "Error: could not acquire exclusive touchpad access" << std::endl;
         cleanup();
         return 1;
@@ -86,8 +90,8 @@ int main(int argc, char *argv[])
 
     // Enable touchpad if -t flag was specified
     if (manageTouchpad) {
-        tm->SetTouchpadEnabled(true);
-        touchpadEnabledModified = true;
+        g_touchpadManager->SetTouchpadEnabled(true);
+        g_touchpadEnabledModified = true;
         std::cout << "Enabled touchpad" << std::endl;
     }
 
@@ -99,6 +103,7 @@ int main(int argc, char *argv[])
     }
     std::cout << "Registered console control handler" << std::endl;
 
+    // Print usage instructions
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << "Initialization complete, absolute touch mode enabled!" << std::endl;
     std::cout << "Keep this window open until you wish to exit absolute touch mode." << std::endl;
@@ -106,9 +111,9 @@ int main(int argc, char *argv[])
 
     // Main message loop
     MSG msg;
-    BOOL bRet;
-    while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
-        if (bRet == -1) {
+    BOOL ret;
+    while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0) {
+        if (ret == -1) {
             break;
         } else {
             TranslateMessage(&msg);
