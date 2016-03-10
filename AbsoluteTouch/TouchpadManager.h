@@ -1,8 +1,8 @@
 #ifndef TOUCHPAD_MANAGER_H
 #define TOUCHPAD_MANAGER_H
 
-#include "Include/SynKit.h"
 #include "Containers.h"
+#include "Include/SynKit.h"
 
 class TouchpadManager : private _ISynDeviceEvents
 {

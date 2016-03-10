@@ -1,8 +1,14 @@
 #include "TouchpadManager.h"
 #include "Containers.h"
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 #define VERSION_NAME "1.0.1"
+#define AUTHOR "crossbowffs"
+#define PROJECT_URL "https://github.com/apsun/AbsoluteTouch"
 
 TouchpadManager *g_touchpadManager = NULL;
 bool g_touchpadEnabledModified = false;
@@ -45,11 +51,11 @@ int main(int argc, char *argv[])
     int forceHeight = 0;
     bool manageTouchpad = false;
     for (int i = 1; i < argc; ++i) {
-        if (!strcmp(argv[i], "-w") && i < argc - 1) {
-            forceWidth = atoi(argv[++i]);
-        } else if (!strcmp(argv[i], "-h") && i < argc - 1) {
-            forceHeight = atoi(argv[++i]);
-        } else if (!strcmp(argv[i], "-t")) {
+        if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
+            forceWidth = std::atoi(argv[++i]);
+        } else if (std::strcmp(argv[i], "-h") == 0  && i < argc - 1) {
+            forceHeight = std::atoi(argv[++i]);
+        } else if (std::strcmp(argv[i], "-t") == 0 ) {
             manageTouchpad = true;
         } else {
             usage();
@@ -59,8 +65,8 @@ int main(int argc, char *argv[])
 
     // Print init info
     std::cout << "AbsoluteTouch v" << VERSION_NAME << std::endl;
-    std::cout << "Author: crossbowffs" << std::endl;
-    std::cout << "Project page: https://github.com/apsun/AbsoluteTouch" << std::endl;
+    std::cout << "Author: " << AUTHOR << std::endl;
+    std::cout << "Project page: " << PROJECT_URL << std::endl;
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << "Starting..." << std::endl;
 
