@@ -6,11 +6,11 @@
 bool TouchpadManager::Initialize(Rect<int> screenRect)
 {
     assert(!m_coinitialized);
-    HRESULT res = CoInitialize(NULL);
+    HRESULT res = CoInitialize(nullptr);
     if (res != S_OK && res != S_FALSE)
         return false;
     m_coinitialized = true;
-    if (CoCreateInstance(_uuidof(SynAPI), NULL, CLSCTX_INPROC_SERVER, _uuidof(ISynAPI), (void **)&m_api) != S_OK)
+    if (CoCreateInstance(_uuidof(SynAPI), nullptr, CLSCTX_INPROC_SERVER, _uuidof(ISynAPI), (void **)&m_api) != S_OK)
         return false;
     if (m_api->Initialize() != SYN_OK)
         return false;
@@ -30,10 +30,10 @@ bool TouchpadManager::Initialize(Rect<int> screenRect)
 bool TouchpadManager::Acquire()
 {
     assert(m_initialized);
-    HRESULT res = m_device->SetSynchronousNotification(this);
-    assert(res == SYN_OK);
     if (m_device->Acquire(0) != SYN_OK)
         return false;
+    HRESULT res = m_device->SetSynchronousNotification(this);
+    assert(res == SYN_OK);
     m_acquired = true;
     return true;
 }
@@ -43,9 +43,9 @@ bool TouchpadManager::Unacquire()
     assert(m_initialized);
     if (!m_acquired)
         return false;
-    HRESULT res = m_device->Unacquire();
+    HRESULT res = m_device->SetSynchronousNotification(nullptr);
     assert(res == SYN_OK);
-    res = m_device->SetSynchronousNotification(NULL);
+    res = m_device->Unacquire();
     assert(res == SYN_OK);
     m_acquired = false;
     return true;
@@ -115,10 +115,10 @@ TouchpadManager::~TouchpadManager()
     if (m_initialized) {
         Unacquire();
     }
-    if (m_packet) m_packet->Release();
-    if (m_device) m_device->Release();
-    if (m_api) m_api->Release();
     if (m_coinitialized) {
+        if (m_packet) m_packet->Release();
+        if (m_device) m_device->Release();
+        if (m_api) m_api->Release();
         CoUninitialize();
     }
 }

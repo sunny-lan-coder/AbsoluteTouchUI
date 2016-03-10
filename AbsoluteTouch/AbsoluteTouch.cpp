@@ -1,6 +1,7 @@
 #include "TouchpadManager.h"
 #include "Containers.h"
 #include <cstdlib>
+#include <cerrno>
 #include <cstring>
 #include <iostream>
 #define WIN32_LEAN_AND_MEAN
@@ -10,7 +11,7 @@
 #define AUTHOR "crossbowffs"
 #define PROJECT_URL "https://github.com/apsun/AbsoluteTouch"
 
-TouchpadManager *g_touchpadManager = NULL;
+TouchpadManager *g_touchpadManager = nullptr;
 bool g_touchpadEnabledModified = false;
 
 void usage()
@@ -51,13 +52,19 @@ int main(int argc, char *argv[])
     int forceHeight = 0;
     bool manageTouchpad = false;
     for (int i = 1; i < argc; ++i) {
+        bool valid = true;
         if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
-            forceWidth = std::atoi(argv[++i]);
+            forceWidth = std::strtol(argv[++i], NULL, 10);
+            if (forceWidth <= 0 || errno == ERANGE) valid = false;
         } else if (std::strcmp(argv[i], "-h") == 0  && i < argc - 1) {
-            forceHeight = std::atoi(argv[++i]);
-        } else if (std::strcmp(argv[i], "-t") == 0 ) {
+            forceHeight = std::strtol(argv[++i], NULL, 10);
+            if (forceHeight <= 0 || errno == ERANGE) valid = false;
+        } else if (std::strcmp(argv[i], "-t") == 0) {
             manageTouchpad = true;
         } else {
+            valid = false;
+        }
+        if (!valid) {
             usage();
             return 1;
         }
@@ -118,7 +125,7 @@ int main(int argc, char *argv[])
     // Main message loop
     MSG msg;
     BOOL ret;
-    while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0) {
+    while ((ret = GetMessage(&msg, nullptr, 0, 0)) != 0) {
         if (ret == -1) {
             break;
         } else {
