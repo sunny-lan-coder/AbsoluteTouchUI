@@ -54,10 +54,10 @@ int main(int argc, char *argv[])
     for (int i = 1; i < argc; ++i) {
         bool valid = true;
         if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
-            forceWidth = std::strtol(argv[++i], NULL, 10);
+            forceWidth = std::strtol(argv[++i], nullptr, 10);
             if (forceWidth <= 0 || errno == ERANGE) valid = false;
         } else if (std::strcmp(argv[i], "-h") == 0  && i < argc - 1) {
-            forceHeight = std::strtol(argv[++i], NULL, 10);
+            forceHeight = std::strtol(argv[++i], nullptr, 10);
             if (forceHeight <= 0 || errno == ERANGE) valid = false;
         } else if (std::strcmp(argv[i], "-t") == 0) {
             manageTouchpad = true;
