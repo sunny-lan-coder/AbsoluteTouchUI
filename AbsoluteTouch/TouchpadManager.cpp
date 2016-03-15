@@ -1,9 +1,7 @@
 #include "TouchpadManager.h"
 #include <cassert>
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 
-bool TouchpadManager::Initialize(Rect<int> screenRect)
+bool TouchpadManager::Initialize()
 {
     assert(!m_coinitialized);
     HRESULT res = CoInitialize(nullptr);
@@ -21,8 +19,6 @@ bool TouchpadManager::Initialize(Rect<int> screenRect)
         return false;
     if (m_device->CreatePacket(&m_packet) != SYN_OK)
         return false;
-    SetTouchpadRect(GetDefaultTouchpadRect());
-    SetScreenRect(screenRect);
     m_initialized = true;
     return true;
 }
@@ -30,25 +26,34 @@ bool TouchpadManager::Initialize(Rect<int> screenRect)
 bool TouchpadManager::Acquire()
 {
     assert(m_initialized);
+    if (m_acquired)
+        return true;
     if (m_device->Acquire(0) != SYN_OK)
         return false;
-    HRESULT res = m_device->SetSynchronousNotification(this);
-    assert(res == SYN_OK);
     m_acquired = true;
     return true;
 }
 
-bool TouchpadManager::Unacquire()
+void TouchpadManager::Unacquire()
 {
     assert(m_initialized);
     if (!m_acquired)
-        return false;
-    HRESULT res = m_device->SetSynchronousNotification(nullptr);
-    assert(res == SYN_OK);
-    res = m_device->Unacquire();
+        return;
+    HRESULT res = m_device->Unacquire();
     assert(res == SYN_OK);
     m_acquired = false;
-    return true;
+}
+
+void TouchpadManager::SetTouchCallback(TouchCallback callback)
+{
+    if (callback != nullptr && m_callback == nullptr) {
+        HRESULT res = m_device->SetSynchronousNotification(this);
+        assert(res == SYN_OK);
+    } else if (callback == nullptr && m_callback != nullptr) {
+        HRESULT res = m_device->SetSynchronousNotification(nullptr);
+        assert(res == SYN_OK);
+    }
+    m_callback = callback;
 }
 
 void TouchpadManager::SetTouchpadEnabled(bool enabled)
@@ -69,29 +74,6 @@ Rect<long> TouchpadManager::GetDefaultTouchpadRect()
     return Rect<long>(minX, minY, maxX - minX, maxY - minY);
 }
 
-void TouchpadManager::SetScreenRect(Rect<int> rect)
-{
-    m_screenRect = rect;
-}
-
-void TouchpadManager::SetTouchpadRect(Rect<long> rect)
-{
-    m_touchpadRect = rect;
-}
-
-Point<int> TouchpadManager::TouchpadToScreenCoords(long touchpadX, long touchpadY)
-{
-    long tpDeltaX = touchpadX - m_touchpadRect.x;
-    long tpDeltaY = touchpadY - m_touchpadRect.y;
-    float unitX = tpDeltaX / (float)m_touchpadRect.width;
-    float unitY = tpDeltaY / (float)m_touchpadRect.height;
-    int scDeltaX = (int)(unitX * m_screenRect.width);
-    int scDeltaY = (int)((1.0f - unitY) * m_screenRect.height);
-    int screenX = m_screenRect.x + scDeltaX;
-    int screenY = m_screenRect.y + scDeltaY;
-    return Point<int>(screenX, screenY);
-}
-
 HRESULT STDMETHODCALLTYPE TouchpadManager::OnSynDevicePacket(long seqNum)
 {
     assert(m_initialized);
@@ -105,20 +87,21 @@ HRESULT STDMETHODCALLTYPE TouchpadManager::OnSynDevicePacket(long seqNum)
     long x, y;
     m_packet->GetProperty(SP_XRaw, &x);
     m_packet->GetProperty(SP_YRaw, &y);
-    Point<int> screenCoords = TouchpadToScreenCoords(x, y);
-    SetCursorPos(screenCoords.x, screenCoords.y);
+    if (m_callback != nullptr)
+        m_callback(x, y);
     return SYN_OK;
 }
 
 TouchpadManager::~TouchpadManager()
 {
     if (m_initialized) {
+        SetTouchCallback(nullptr);
         Unacquire();
     }
     if (m_coinitialized) {
-        if (m_packet) m_packet->Release();
-        if (m_device) m_device->Release();
-        if (m_api) m_api->Release();
+        if (m_packet != nullptr) m_packet->Release();
+        if (m_device != nullptr) m_device->Release();
+        if (m_api != nullptr) m_api->Release();
         CoUninitialize();
     }
 }

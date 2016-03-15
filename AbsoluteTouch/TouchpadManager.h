@@ -4,30 +4,29 @@
 #include "Containers.h"
 #include "Include/SynKit.h"
 
+typedef void (*TouchCallback)(long touchpadX, long touchpadY);
+
 class TouchpadManager : private _ISynDeviceEvents
 {
 public:
-    bool Initialize(Rect<int> screenRect);
+    bool Initialize();
     bool Acquire();
-    bool Unacquire();
+    void Unacquire();
+    void SetTouchCallback(TouchCallback callback);
     void SetTouchpadEnabled(bool enabled);
     Rect<long> GetDefaultTouchpadRect();
-    void SetTouchpadRect(Rect<long> rect);
-    void SetScreenRect(Rect<int> rect);
     ~TouchpadManager();
 
 private:
-    Point<int> TouchpadToScreenCoords(long touchpadX, long touchpadY);
     HRESULT STDMETHODCALLTYPE OnSynDevicePacket(long seqNum) override;
 
-    ISynAPI *m_api = NULL;
-    ISynDevice *m_device = NULL;
-    ISynPacket *m_packet = NULL;
-    Rect<long> m_touchpadRect;
-    Rect<int> m_screenRect;
+    ISynAPI *m_api = nullptr;
+    ISynDevice *m_device = nullptr;
+    ISynPacket *m_packet = nullptr;
     bool m_initialized = false;
     bool m_coinitialized = false;
     bool m_acquired = false;
+    TouchCallback m_callback = nullptr;
 };
 
 #endif

@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Containers.h" />
+    <ClInclude Include="CoordinateMapper.h" />
     <ClInclude Include="Include\SynCom.h" />
     <ClInclude Include="Include\SynComDefs.h" />
     <ClInclude Include="Include\SynCtrl.h" />
@@ -154,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AbsoluteTouch.cpp" />
+    <ClCompile Include="CoordinateMapper.cpp" />
     <ClCompile Include="TouchpadManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
