@@ -10,13 +10,17 @@ void CoordinateMapper::SetScreenRect(Rect<int> rect)
     m_screenRect = rect;
 }
 
-Point<int> CoordinateMapper::TouchpadToScreenCoords(long touchpadX, long touchpadY)
+Point<int> CoordinateMapper::TouchpadToScreenCoords(Point<long> touchpadCoords)
 {
-    long tpDeltaX = touchpadX - m_touchpadRect.x;
-    long tpDeltaY = touchpadY - m_touchpadRect.y;
-    int scDeltaX = (int)(tpDeltaX * m_screenRect.width / m_touchpadRect.width);
-    int scDeltaY = (int)((m_touchpadRect.height - tpDeltaY) * m_screenRect.height / m_touchpadRect.height);
-    int screenX = m_screenRect.x + scDeltaX;
-    int screenY = m_screenRect.y + scDeltaY;
+    long tpWidth = m_touchpadRect.x2 - m_touchpadRect.x1 + 1;
+    long tpHeight = m_touchpadRect.y2 - m_touchpadRect.y1 + 1;
+    int scWidth = m_screenRect.x2 - m_screenRect.x1;
+    int scHeight = m_screenRect.y2 - m_screenRect.y1;
+    long tpDeltaX = touchpadCoords.x - m_touchpadRect.x1;
+    long tpDeltaY = touchpadCoords.y - m_touchpadRect.y1;
+    int scDeltaX = (int)(tpDeltaX * scWidth / tpWidth);
+    int scDeltaY = (int)(tpDeltaY * scHeight / tpHeight);
+    int screenX = m_screenRect.x1 + scDeltaX;
+    int screenY = m_screenRect.y1 + scDeltaY;
     return Point<int>(screenX, screenY);
 }

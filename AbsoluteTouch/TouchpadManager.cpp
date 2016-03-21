@@ -19,6 +19,10 @@ bool TouchpadManager::Initialize()
         return false;
     if (m_device->CreatePacket(&m_packet) != SYN_OK)
         return false;
+    m_device->GetProperty(SP_XLoSensor, &m_bounds.x1);
+    m_device->GetProperty(SP_XHiSensor, &m_bounds.x2);
+    m_device->GetProperty(SP_YLoSensor, &m_bounds.y1);
+    m_device->GetProperty(SP_YHiSensor, &m_bounds.y2);
     m_initialized = true;
     return true;
 }
@@ -56,6 +60,16 @@ void TouchpadManager::SetTouchCallback(TouchCallback callback)
     m_callback = callback;
 }
 
+bool TouchpadManager::IsTouchpadEnabled()
+{
+    assert(m_initialized);
+    HRESULT out;
+    HRESULT res = m_device->GetProperty(SP_DisableState, &out);
+    assert(res == SYN_OK);
+    assert(out == SYN_FALSE || out == SYN_TRUE);
+    return (out != SYN_FALSE);
+}
+
 void TouchpadManager::SetTouchpadEnabled(bool enabled)
 {
     assert(m_initialized);
@@ -71,7 +85,16 @@ Rect<long> TouchpadManager::GetDefaultTouchpadRect()
     m_device->GetProperty(SP_XHiBorder, &maxX);
     m_device->GetProperty(SP_YLoBorder, &minY);
     m_device->GetProperty(SP_YHiBorder, &maxY);
-    return Rect<long>(minX, minY, maxX - minX, maxY - minY);
+    Point<long> topLeft = NormalizeCoordinates(minX, maxY);
+    Point<long> bottomRight = NormalizeCoordinates(maxX, minY);
+    return Rect<long>(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+}
+
+Point<long> TouchpadManager::NormalizeCoordinates(long x, long y)
+{
+    long nx = x - m_bounds.x1;
+    long ny = m_bounds.y2 - y;
+    return Point<long>(nx, ny);
 }
 
 HRESULT STDMETHODCALLTYPE TouchpadManager::OnSynDevicePacket(long seqNum)
@@ -82,13 +105,14 @@ HRESULT STDMETHODCALLTYPE TouchpadManager::OnSynDevicePacket(long seqNum)
         return res;
     long fingerState;
     m_packet->GetProperty(SP_FingerState, &fingerState);
-    if (!(fingerState & SF_FingerPresent))
+    if ((fingerState & SF_FingerPresent) == 0)
         return SYN_OK;
     long x, y;
     m_packet->GetProperty(SP_XRaw, &x);
     m_packet->GetProperty(SP_YRaw, &y);
+    Point<long> coords = NormalizeCoordinates(x, y);
     if (m_callback != nullptr)
-        m_callback(x, y);
+        m_callback(coords);
     return SYN_OK;
 }
 

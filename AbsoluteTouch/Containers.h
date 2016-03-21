@@ -6,20 +6,20 @@
 template <typename T>
 struct Rect
 {
-    T x;
-    T y;
-    T width;
-    T height;
+    T x1;
+    T y1;
+    T x2;
+    T y2;
 
     Rect() = default;
-    Rect(T x, T y, T width, T height) : x(x), y(y), width(width), height(height) { }
+    Rect(T x1, T y1, T x2, T y2) : x1(x1), y1(y1), x2(x2), y2(y2) { }
 };
 
 template <typename T>
 std::ostream & operator<<(std::ostream &os, Rect<T> rect)
 {
-    os << "{X=" << rect.x << ", Y=" << rect.y;
-    os << ", W=" << rect.width << ", H=" << rect.height << "}";
+    os << "{X1=" << rect.x1 << ", Y1=" << rect.y1;
+    os << ", X2=" << rect.x2 << ", Y2=" << rect.y2 << "}";
     return os;
 }
 
@@ -36,7 +36,7 @@ struct Point
 template <typename T>
 std::ostream & operator<<(std::ostream &os, Point<T> point)
 {
-    os << "{X=" << point.x << ", Y=" << point.y << "}";
+    os << "(" << point.x << ", " << point.y << ")";
     return os;
 }
 

@@ -6,7 +6,7 @@
 class CoordinateMapper
 {
 public:
-    Point<int> TouchpadToScreenCoords(long touchpadX, long touchpadY);
+    Point<int> TouchpadToScreenCoords(Point<long> touchpadCoords);
     void SetTouchpadRect(Rect<long> rect);
     void SetScreenRect(Rect<int> rect);
 

@@ -4,7 +4,7 @@
 #include "Containers.h"
 #include "Include/SynKit.h"
 
-typedef void (*TouchCallback)(long touchpadX, long touchpadY);
+typedef void (*TouchCallback)(Point<long> coords);
 
 class TouchpadManager : private _ISynDeviceEvents
 {
@@ -13,11 +13,13 @@ public:
     bool Acquire();
     void Unacquire();
     void SetTouchCallback(TouchCallback callback);
+    bool IsTouchpadEnabled();
     void SetTouchpadEnabled(bool enabled);
     Rect<long> GetDefaultTouchpadRect();
     ~TouchpadManager();
 
 private:
+    Point<long> NormalizeCoordinates(long x, long y);
     HRESULT STDMETHODCALLTYPE OnSynDevicePacket(long seqNum) override;
 
     ISynAPI *m_api = nullptr;
@@ -27,6 +29,7 @@ private:
     bool m_coinitialized = false;
     bool m_acquired = false;
     TouchCallback m_callback = nullptr;
+    Rect<long> m_bounds;
 };
 
 #endif
