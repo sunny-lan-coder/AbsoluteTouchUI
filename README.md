@@ -12,16 +12,17 @@ now you can!
 ## Notes
 
 - You must disable raw input in the target program!
-- While absolute mode is active, your touchpad can only be used to
-move the cursor -- clicking, scrolling, gestures, etc. will be disabled.
+- While absolute mode is active, your touchpad can only be used to move the
+cursor -- clicking, scrolling, gestures, etc. will be disabled.
 
 ## Command-line arguments
 
-| Argument      | Description                                                            |
-|---------------|------------------------------------------------------------------------|
-| `-w <width>`  | Sets the width of the mapped screen region (in pixels).                |
-| `-h <height>` | Sets the height of the mapped screen region (in pixels).               |
-| `-t`          | Enables your touchpad when the program starts, and disables it on exit |
+| Argument         | Description                                                                    |
+|------------------|--------------------------------------------------------------------------------|
+| `-t x1,y1,x2,y2` | Sets the mapped touchpad region (x1 = left, y1 = top, x2 = right, y2 = bottom) |
+| `-s x1,y1,x2,y2` | Sets the mapped screen region (see above)                                      |
+| `-m`             | Enables your touchpad when the program starts, and disables it on exit         |
+| `-d`             | Enables debug mode (reduces performance, disable if you get mouse lag)         |
 
 ## License
 
