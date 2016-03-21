@@ -67,7 +67,7 @@ bool TouchpadManager::IsTouchpadEnabled()
     HRESULT res = m_device->GetProperty(SP_DisableState, &out);
     assert(res == SYN_OK);
     assert(out == SYN_FALSE || out == SYN_TRUE);
-    return (out != SYN_FALSE);
+    return (out == SYN_FALSE);
 }
 
 void TouchpadManager::SetTouchpadEnabled(bool enabled)
