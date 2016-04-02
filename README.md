@@ -22,6 +22,7 @@ cursor -- clicking, scrolling, gestures, etc. will be disabled.
 | `-t x1,y1,x2,y2` | Sets the mapped touchpad region (x1 = left, y1 = top, x2 = right, y2 = bottom) |
 | `-s x1,y1,x2,y2` | Sets the mapped screen region (see above)                                      |
 | `-m`             | Enables your touchpad when the program starts, and disables it on exit         |
+| `-w weight`      | Sets the touch smoothing factor (0 to 1, 0 for no smoothing)                   |
 | `-d`             | Enables debug mode (reduces performance, disable if you get mouse lag)         |
 
 ## License
