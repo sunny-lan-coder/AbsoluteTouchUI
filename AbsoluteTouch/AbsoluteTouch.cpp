@@ -1,4 +1,5 @@
 #include "TouchpadManager.h"
+#include "TouchProcessor.h"
 #include "CoordinateMapper.h"
 #include "Containers.h"
 #include <cstring>
@@ -9,11 +10,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#define VERSION_NAME "1.1.0"
+#define VERSION_NAME "1.2.0"
 #define AUTHOR "crossbowffs"
 #define PROJECT_URL "https://github.com/apsun/AbsoluteTouch"
 
 TouchpadManager *g_touchpadManager = nullptr;
+TouchProcessor g_touchProcessor;
 CoordinateMapper g_coordinateMapper;
 bool g_touchpadEnabledModified = false;
 bool g_debugMode = false;
@@ -24,7 +26,8 @@ void PrintUsage()
     std::cerr << "  -t x1,y1,x2,y2  Sets the mapped touchpad region" << std::endl;
     std::cerr << "  -s x1,y1,x2,y2  Sets the mapped screen region" << std::endl;
     std::cerr << "  -m              Enables the touchpad on start, disables it on exit" << std::endl;
-    std::cerr << "  -d              Enables debug mode (for seeing your touchpad coordinates)" << std::endl;
+    std::cerr << "  -w weight       Sets the touch smoothing weight factor (0 to 1, default 0)" << std::endl;
+    std::cerr << "  -d              Enables debug mode (may reduce performance)" << std::endl;
 }
 
 void CleanUp()
@@ -54,13 +57,21 @@ BOOL WINAPI OnConsoleSignal(DWORD signal)
     return FALSE;
 }
 
-void OnTouch(Point<long> touchpadCoords)
+void OnTouch(TouchEvent e)
 {
-    Point<int> screenPt = g_coordinateMapper.TouchpadToScreenCoords(touchpadCoords);
-    if (g_debugMode) {
-        std::cout << "Touchpad: " << touchpadCoords << " -> Screen: " << screenPt << std::endl;
+    if (!e.touching) {
+        g_touchProcessor.TouchEnded();
+    } else {
+        Point<long> averagedPt = g_touchProcessor.Update(e.point);
+        Point<int> screenPt = g_coordinateMapper.TouchpadToScreenCoords(averagedPt);
+        SetCursorPos(screenPt.x, screenPt.y);
+        if (g_debugMode) {
+            std::cout << "Touch event:" << std::endl;
+            std::cout << "  Raw touch point: " << e.point << std::endl;
+            std::cout << "  Averaged touch point: " << averagedPt << std::endl;
+            std::cout << "  Target screen point: " << screenPt << std::endl;
+        }
     }
-    SetCursorPos(screenPt.x, screenPt.y);
 }
 
 template <typename T>
@@ -93,18 +104,25 @@ int main(int argc, char *argv[])
     Rect<int> screenRect;
     Rect<long> touchpadRect;
     bool manageTouchpad = false;
+    float smoothingWeight = 0.0f;
     for (int i = 1; i < argc; ++i) {
         bool valid = true;
         if (std::strcmp(argv[i], "-t") == 0 && i < argc - 1) {
-            if (!ParseRect(argv[++i], &touchpadRect)) valid = false;
+            if (!ParseRect(argv[++i], &touchpadRect))
+                valid = false;
             setTouchpadRect = true;
         } else if (std::strcmp(argv[i], "-s") == 0 && i < argc - 1) {
-            if (!ParseRect(argv[++i], &screenRect)) valid = false;
+            if (!ParseRect(argv[++i], &screenRect))
+                valid = false;
             setScreenRect = true;
         } else if (std::strcmp(argv[i], "-m") == 0) {
             manageTouchpad = true;
         } else if (std::strcmp(argv[i], "-d") == 0) {
             g_debugMode = true;
+        } else if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
+            smoothingWeight = (float)std::stod(argv[++i]);
+            if (smoothingWeight < 0.0f || smoothingWeight > 1.0f)
+                valid = false;
         } else {
             valid = false;
         }
@@ -131,6 +149,10 @@ int main(int argc, char *argv[])
         return 1;
     }
     std::cout << "Initialized touchpad manager" << std::endl;
+
+    // Set touch smoothing weight
+    g_touchProcessor.SetWeight(smoothingWeight);
+    std::cout << "Touch smoothing weight factor: " << smoothingWeight << std::endl;
 
     // Get touchpad dimensions
     if (!setTouchpadRect) {

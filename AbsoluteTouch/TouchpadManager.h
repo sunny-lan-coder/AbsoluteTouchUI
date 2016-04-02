@@ -4,7 +4,13 @@
 #include "Containers.h"
 #include "Include/SynKit.h"
 
-typedef void (*TouchCallback)(Point<long> coords);
+struct TouchEvent
+{
+    Point<long> point;
+    bool touching;
+};
+
+typedef void (*TouchCallback)(TouchEvent e);
 
 class TouchpadManager : private _ISynDeviceEvents
 {

@@ -103,16 +103,19 @@ HRESULT STDMETHODCALLTYPE TouchpadManager::OnSynDevicePacket(long seqNum)
     HRESULT res = m_device->LoadPacket(m_packet);
     if (res != SYN_OK && res != SYNE_SEQUENCE)
         return res;
-    long fingerState;
-    m_packet->GetProperty(SP_FingerState, &fingerState);
-    if ((fingerState & SF_FingerPresent) == 0)
-        return SYN_OK;
-    long x, y;
-    m_packet->GetProperty(SP_XRaw, &x);
-    m_packet->GetProperty(SP_YRaw, &y);
-    Point<long> coords = NormalizeCoordinates(x, y);
-    if (m_callback != nullptr)
-        m_callback(coords);
+    if (m_callback != nullptr) {
+        TouchEvent e;
+        long fingerState;
+        m_packet->GetProperty(SP_FingerState, &fingerState);
+        e.touching = (fingerState & SF_FingerPresent) != 0;
+        if (e.touching) {
+            long x, y;
+            m_packet->GetProperty(SP_XRaw, &x);
+            m_packet->GetProperty(SP_YRaw, &y);
+            e.point = NormalizeCoordinates(x, y);
+        }
+        m_callback(e);
+    }
     return SYN_OK;
 }
 
