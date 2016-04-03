@@ -81,10 +81,17 @@ bool ParseRect(const std::string &str, Rect<T> *out)
     std::smatch match;
     if (!std::regex_match(str, match, re))
         return false;
-    T x1 = std::stoi(match[1].str());
-    T y1 = std::stoi(match[2].str());
-    T x2 = std::stoi(match[3].str());
-    T y2 = std::stoi(match[4].str());
+    T x1, y1, x2, y2;
+    try {
+        x1 = std::stoi(match[1].str());
+        y1 = std::stoi(match[2].str());
+        x2 = std::stoi(match[3].str());
+        y2 = std::stoi(match[4].str());
+    } catch (std::invalid_argument) {
+        return false;
+    } catch (std::out_of_range) {
+        return false;
+    }
     if (x1 > x2)
         return false;
     if (y1 > y2)
@@ -93,6 +100,22 @@ bool ParseRect(const std::string &str, Rect<T> *out)
     out->y1 = y1;
     out->x2 = x2;
     out->y2 = y2;
+    return true;
+}
+
+bool ParsePercentage(const std::string &str, float *out)
+{
+    float value;
+    try {
+        value = std::stof(str);
+    } catch (std::invalid_argument) {
+        return false;
+    } catch (std::out_of_range) {
+        return false;
+    }
+    if (value < 0.0f || value > 1.0f)
+        return false;
+    *out = value;
     return true;
 }
 
@@ -120,8 +143,7 @@ int main(int argc, char *argv[])
         } else if (std::strcmp(argv[i], "-d") == 0) {
             g_debugMode = true;
         } else if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
-            smoothingWeight = (float)std::stod(argv[++i]);
-            if (smoothingWeight < 0.0f || smoothingWeight > 1.0f)
+            if (!ParsePercentage(argv[++i], &smoothingWeight))
                 valid = false;
         } else {
             valid = false;
