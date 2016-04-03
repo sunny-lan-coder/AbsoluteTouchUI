@@ -16,8 +16,9 @@ Point<long> TouchProcessor::Update(Point<long> rawPoint)
         m_average = rawPoint;
         m_touching = true;
     } else {
-        m_average.x = (long)((1.0f - m_weight) * rawPoint.x + m_weight * m_average.x);
-        m_average.y = (long)((1.0f - m_weight) * rawPoint.y + m_weight * m_average.y);
+        float oneMinusWeight = 1.0f - m_weight;
+        m_average.x = (long)(oneMinusWeight * rawPoint.x + m_weight * m_average.x);
+        m_average.y = (long)(oneMinusWeight * rawPoint.y + m_weight * m_average.y);
     }
     return m_average;
 }
