@@ -87,9 +87,9 @@ bool ParseRect(const std::string &str, Rect<T> *out)
         y1 = std::stoi(match[2].str());
         x2 = std::stoi(match[3].str());
         y2 = std::stoi(match[4].str());
-    } catch (std::invalid_argument) {
+    } catch (const std::invalid_argument&) {
         return false;
-    } catch (std::out_of_range) {
+    } catch (const std::out_of_range&) {
         return false;
     }
     if (x1 > x2)
@@ -108,9 +108,9 @@ bool ParsePercentage(const std::string &str, float *out)
     float value;
     try {
         value = std::stof(str);
-    } catch (std::invalid_argument) {
+    } catch (const std::invalid_argument&) {
         return false;
-    } catch (std::out_of_range) {
+    } catch (const std::out_of_range&) {
         return false;
     }
     if (value < 0.0f || value > 1.0f)
