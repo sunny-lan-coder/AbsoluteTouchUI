@@ -11,9 +11,9 @@ now you can!
 
 ## Notes
 
-- You must disable raw input in the target program!
 - While absolute mode is active, your touchpad can only be used to move the
 cursor -- clicking, scrolling, gestures, etc. will be disabled.
+- If your cursor does not move in-game, you may have to disable raw input mode.
 
 ## Command-line arguments
 
@@ -21,8 +21,8 @@ cursor -- clicking, scrolling, gestures, etc. will be disabled.
 |------------------|--------------------------------------------------------------------------------|
 | `-t x1,y1,x2,y2` | Sets the mapped touchpad region (x1 = left, y1 = top, x2 = right, y2 = bottom) |
 | `-s x1,y1,x2,y2` | Sets the mapped screen region (see above)                                      |
-| `-m`             | Enables your touchpad when the program starts, and disables it on exit         |
 | `-w weight`      | Sets the touch smoothing factor (0 to 1, 0 for no smoothing)                   |
+| `-m`             | Enables your touchpad when the program starts, and disables it on exit         |
 | `-d`             | Enables debug mode (reduces performance, disable if you get mouse lag)         |
 
 ## License
