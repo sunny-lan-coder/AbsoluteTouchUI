@@ -10,7 +10,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#define VERSION_NAME "1.2.0"
+#define VERSION_NAME "1.3.0"
 #define AUTHOR "crossbowffs"
 #define PROJECT_URL "https://github.com/apsun/AbsoluteTouch"
 
@@ -25,8 +25,8 @@ void PrintUsage()
     std::cerr << "usage: AbsoluteTouch.exe [-w <width>] [-h <height>] [-t]" << std::endl;
     std::cerr << "  -t x1,y1,x2,y2  Sets the mapped touchpad region" << std::endl;
     std::cerr << "  -s x1,y1,x2,y2  Sets the mapped screen region" << std::endl;
-    std::cerr << "  -m              Enables the touchpad on start, disables it on exit" << std::endl;
     std::cerr << "  -w weight       Sets the touch smoothing weight factor (0 to 1, default 0)" << std::endl;
+    std::cerr << "  -m              Enables the touchpad on start, disables it on exit" << std::endl;
     std::cerr << "  -d              Enables debug mode (may reduce performance)" << std::endl;
 }
 
@@ -57,6 +57,18 @@ BOOL WINAPI OnConsoleSignal(DWORD signal)
     return FALSE;
 }
 
+void SendCursorInput(Point<int> screenPt)
+{
+    INPUT input[1];
+    input[0].type = INPUT_MOUSE;
+    input[0].mi.dx = screenPt.x;
+    input[0].mi.dy = screenPt.y;
+    input[0].mi.mouseData = 0;
+    input[0].mi.dwFlags = MOUSEEVENTF_MOVE |  MOUSEEVENTF_ABSOLUTE;
+    input[0].mi.time = 0;
+    SendInput(1, input, sizeof(INPUT));
+}
+
 void OnTouch(TouchEvent e)
 {
     if (!e.touching) {
@@ -64,7 +76,7 @@ void OnTouch(TouchEvent e)
     } else {
         Point<long> averagedPt = g_touchProcessor.Update(e.point);
         Point<int> screenPt = g_coordinateMapper.TouchpadToScreenCoords(averagedPt);
-        SetCursorPos(screenPt.x, screenPt.y);
+        SendCursorInput(screenPt);
         if (g_debugMode) {
             std::cout << "Touch event:" << std::endl;
             std::cout << "  Raw touch point: " << e.point << std::endl;
@@ -138,13 +150,13 @@ int main(int argc, char *argv[])
             if (!ParseRect(argv[++i], &screenRect))
                 valid = false;
             setScreenRect = true;
+        } else if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
+            if (!ParsePercentage(argv[++i], &smoothingWeight))
+                valid = false;
         } else if (std::strcmp(argv[i], "-m") == 0) {
             manageTouchpad = true;
         } else if (std::strcmp(argv[i], "-d") == 0) {
             g_debugMode = true;
-        } else if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
-            if (!ParsePercentage(argv[++i], &smoothingWeight))
-                valid = false;
         } else {
             valid = false;
         }

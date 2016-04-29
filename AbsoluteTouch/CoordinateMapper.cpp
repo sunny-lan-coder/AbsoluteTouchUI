@@ -22,5 +22,5 @@ Point<int> CoordinateMapper::TouchpadToScreenCoords(Point<long> touchpadCoords)
     int scDeltaY = (int)(tpDeltaY * scHeight / tpHeight);
     int screenX = m_screenRect.x1 + scDeltaX;
     int screenY = m_screenRect.y1 + scDeltaY;
-    return Point<int>(screenX, screenY);
+    return Point<int>(screenX * 65535 / scWidth, screenY * 65535 / scHeight);
 }
