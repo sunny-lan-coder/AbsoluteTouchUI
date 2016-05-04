@@ -22,11 +22,11 @@ bool g_debugMode = false;
 
 void PrintUsage()
 {
-    std::cerr << "usage: AbsoluteTouch.exe [-w <width>] [-h <height>] [-t]" << std::endl;
-    std::cerr << "  -t x1,y1,x2,y2  Sets the mapped touchpad region" << std::endl;
-    std::cerr << "  -s x1,y1,x2,y2  Sets the mapped screen region" << std::endl;
-    std::cerr << "  -w weight       Sets the touch smoothing weight factor (0 to 1, default 0)" << std::endl;
-    std::cerr << "  -m              Enables the touchpad on start, disables it on exit" << std::endl;
+    std::cerr << "usage: AbsoluteTouch.exe <args>\n";
+    std::cerr << "  -t x1,y1,x2,y2  Sets the mapped touchpad region\n";
+    std::cerr << "  -s x1,y1,x2,y2  Sets the mapped screen region\n";
+    std::cerr << "  -w weight       Sets the touch smoothing factor (0 to 1, 0 = no smoothing)\n";
+    std::cerr << "  -m              Enables the touchpad on start, disables it on exit\n";
     std::cerr << "  -d              Enables debug mode (may reduce performance)" << std::endl;
 }
 
@@ -64,7 +64,7 @@ void SendCursorInput(Point<int> screenPt)
     input[0].mi.dx = screenPt.x;
     input[0].mi.dy = screenPt.y;
     input[0].mi.mouseData = 0;
-    input[0].mi.dwFlags = MOUSEEVENTF_MOVE |  MOUSEEVENTF_ABSOLUTE;
+    input[0].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
     input[0].mi.time = 0;
     SendInput(1, input, sizeof(INPUT));
 }
@@ -78,9 +78,9 @@ void OnTouch(TouchEvent e)
         Point<int> screenPt = g_coordinateMapper.TouchpadToScreenCoords(averagedPt);
         SendCursorInput(screenPt);
         if (g_debugMode) {
-            std::cout << "Touch event:" << std::endl;
-            std::cout << "  Raw touch point: " << e.point << std::endl;
-            std::cout << "  Averaged touch point: " << averagedPt << std::endl;
+            std::cout << "Touch event:\n";
+            std::cout << "  Raw touch point: " << e.point << '\n';
+            std::cout << "  Averaged touch point: " << averagedPt << '\n';
             std::cout << "  Target screen point: " << screenPt << std::endl;
         }
     }
