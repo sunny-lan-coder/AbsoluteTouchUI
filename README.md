@@ -16,8 +16,8 @@ now you can!
 | `-t x1,y1,x2,y2` | Sets the mapped touchpad region (0 to 100, 0 = left/top, 100 = right/bottom)   |
 | `-s x1,y1,x2,y2` | Sets the mapped screen region (see above)                                      |
 | `-w weight`      | Sets the touch smoothing factor (0 to 100, 0 for no smoothing)                 |
-| `-m`             | Enables your touchpad when the program starts, and disables it on exit         |
 | `-c`             | Enables left clicking by touching the touchpad                                 |
+| `-m`             | Enables your touchpad when the program starts, and disables it on exit         |
 
 Examples:
 - `-w 50 -t 50,0,100,100` apply 50% touch smoothing and only use the right

@@ -1,16 +1,15 @@
-#include "TouchpadManager.h"
-#include "TouchProcessor.h"
-#include "CoordinateMapper.h"
-#include "Containers.h"
 #include "CCoInitialize.h"
+#include "Containers.h"
+#include "CoordinateMapper.h"
 #include "InputHelper.h"
+#include "TouchProcessor.h"
+#include "TouchpadManager.h"
 #include <cstring>
 #include <exception>
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <regex>
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #define VERSION_NAME "1.4.0"
@@ -20,10 +19,27 @@
 class TouchCallbackImpl : public TouchCallback
 {
 public:
-    CoordinateMapper m_coordMapper;
-    TouchProcessor m_touchProcessor;
-    bool m_sendClick = false;
+    void SetTouchpadRect(Rect<long> touchpadRect)
+    {
+        m_coordMapper.SetTouchpadRect(touchpadRect);
+    }
 
+    void SetScreenRect(Rect<long> screenRect)
+    {
+        m_coordMapper.SetScreenRect(screenRect);
+    }
+
+    void SetSmoothingWeight(int weight)
+    {
+        m_touchProcessor.SetWeight(weight);
+    }
+
+    void SetSendClick(bool sendClick)
+    {
+        m_sendClick = sendClick;
+    }
+
+private:
     void OnTouchStarted(Point<long> touchPt) override
     {
         if (m_sendClick) {
@@ -46,13 +62,16 @@ public:
         m_touchProcessor.TouchEnded();
     }
 
-private:
     Point<long> TouchToScreen(Point<long> touchPt)
     {
         Point<long> avgPt = m_touchProcessor.Update(touchPt);
         Point<long> screenPt = m_coordMapper.TouchToScreenCoords(avgPt);
         return screenPt;
     }
+
+    CoordinateMapper m_coordMapper;
+    TouchProcessor m_touchProcessor;
+    bool m_sendClick = false;
 };
 
 TouchpadManager *g_touchpadManager = nullptr;
@@ -62,10 +81,10 @@ bool g_touchpadEnabledModified = false;
 void PrintUsage()
 {
     std::cerr << "usage: AbsoluteTouch.exe <args>\n";
-    std::cerr << "  -t x1,y1,x2,y2  Mapped touchpad region\n";
-    std::cerr << "  -s x1,y1,x2,y2  Mapped screen region\n";
-    std::cerr << "  -w weight       Touch smoothing factor\n";
-    std::cerr << "  -c              Enable click input\n";
+    std::cerr << "  -t x1,y1,x2,y2  Set the mapped touchpad region\n";
+    std::cerr << "  -s x1,y1,x2,y2  Set the mapped screen region\n";
+    std::cerr << "  -w weight       Set the touch smoothing factor\n";
+    std::cerr << "  -c              Enable tap to click\n";
     std::cerr << "  -m              Enable/disable the touchpad on start/exit\n";
     std::cerr << std::flush;
 }
@@ -167,7 +186,7 @@ int main(int argc, char *argv[])
     Rect<int> screenRect(0, 0, 100, 100);
     Rect<int> touchpadRect(0, 0, 100, 100);
     bool manageTouchpad = false;
-    bool sendClicks = false;
+    bool sendClick = false;
     int smoothingWeight = 0;
     for (int i = 1; i < argc; ++i) {
         bool valid = true;
@@ -183,7 +202,7 @@ int main(int argc, char *argv[])
         } else if (std::strcmp(argv[i], "-m") == 0) {
             manageTouchpad = true;
         } else if (std::strcmp(argv[i], "-c") == 0) {
-            sendClicks = true;
+            sendClick = true;
         } else {
             valid = false;
         }
@@ -230,15 +249,14 @@ int main(int argc, char *argv[])
     }
     std::cout << "Acquired exclusive touchpad access" << std::endl;
 
+    // Register touchpad touch callback
     Rect<long> screenRectAbs = RelativeToAbsoluteRect(Rect<long>(0, 0, 65535, 65535), screenRect);
     Rect<long> touchRectAbs = RelativeToAbsoluteRect(g_touchpadManager->GetTouchpadRect(), touchpadRect);
-
-    // Register touchpad touch callback
     g_touchCallback = new TouchCallbackImpl();
-    g_touchCallback->m_coordMapper.SetScreenRect(screenRectAbs);
-    g_touchCallback->m_coordMapper.SetTouchpadRect(touchRectAbs);
-    g_touchCallback->m_touchProcessor.SetWeight(smoothingWeight);
-    g_touchCallback->m_sendClick = sendClicks;
+    g_touchCallback->SetScreenRect(screenRectAbs);
+    g_touchCallback->SetTouchpadRect(touchRectAbs);
+    g_touchCallback->SetSmoothingWeight(smoothingWeight);
+    g_touchCallback->SetSendClick(sendClick);
     g_touchpadManager->SetTouchCallback(g_touchCallback);
     std::cout << "Registered touch listener" << std::endl;
 
