@@ -3,25 +3,32 @@
 
 #include "Containers.h"
 #include "Include/SynKit.h"
+#include <exception>
 
-struct TouchEvent
+class TouchpadInitException : public std::runtime_error
 {
-    Point<long> point;
-    bool touching;
+public:
+    TouchpadInitException(const char *msg) : std::runtime_error(msg) { }
 };
 
-typedef void (*TouchCallback)(TouchEvent e);
+class TouchCallback
+{
+public:
+    virtual void OnTouchStarted(Point<long> touchPt) = 0;
+    virtual void OnTouchMoved(Point<long> touchPt) = 0;
+    virtual void OnTouchEnded() = 0;
+};
 
 class TouchpadManager : private _ISynDeviceEvents
 {
 public:
-    bool Initialize();
+    TouchpadManager();
     bool Acquire();
     void Unacquire();
-    void SetTouchCallback(TouchCallback callback);
+    void SetTouchCallback(TouchCallback *callback);
     bool IsTouchpadEnabled();
     void SetTouchpadEnabled(bool enabled);
-    Rect<long> GetDefaultTouchpadRect();
+    Rect<long> GetTouchpadRect();
     ~TouchpadManager();
 
 private:
@@ -31,11 +38,11 @@ private:
     ISynAPI *m_api = nullptr;
     ISynDevice *m_device = nullptr;
     ISynPacket *m_packet = nullptr;
-    bool m_initialized = false;
-    bool m_coinitialized = false;
-    bool m_acquired = false;
-    TouchCallback m_callback = nullptr;
+    TouchCallback *m_callback = nullptr;
     Rect<long> m_bounds;
+    bool m_initialized = false;
+    bool m_acquired = false;
+    bool m_touching = false;
 };
 
 #endif

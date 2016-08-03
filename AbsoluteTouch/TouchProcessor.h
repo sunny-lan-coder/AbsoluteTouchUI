@@ -6,12 +6,12 @@
 class TouchProcessor
 {
 public:
-    void SetWeight(float weight);
+    void SetWeight(int weight);
     void TouchEnded();
     Point<long> Update(Point<long> rawPoint);
 
 private:
-    float m_weight = 0.0f;
+    int m_weight = 0;
     bool m_touching = false;
     Point<long> m_average;
 };

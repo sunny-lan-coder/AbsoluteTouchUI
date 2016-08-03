@@ -2,7 +2,10 @@
 #include "TouchProcessor.h"
 #include "CoordinateMapper.h"
 #include "Containers.h"
+#include "CCoInitialize.h"
+#include "InputHelper.h"
 #include <cstring>
+#include <exception>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -10,24 +13,61 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#define VERSION_NAME "1.3.0"
+#define VERSION_NAME "1.4.0"
 #define AUTHOR "crossbowffs"
 #define PROJECT_URL "https://github.com/apsun/AbsoluteTouch"
 
+class TouchCallbackImpl : public TouchCallback
+{
+public:
+    CoordinateMapper m_coordMapper;
+    TouchProcessor m_touchProcessor;
+    bool m_sendClick = false;
+
+    void OnTouchStarted(Point<long> touchPt) override
+    {
+        if (m_sendClick) {
+            SendLeftDown(TouchToScreen(touchPt));
+        } else {
+            MoveCursor(TouchToScreen(touchPt));
+        }
+    }
+
+    void OnTouchMoved(Point<long> touchPt) override
+    {
+        MoveCursor(TouchToScreen(touchPt));
+    }
+
+    void OnTouchEnded() override
+    {
+        if (m_sendClick) {
+            SendLeftUp();
+        }
+        m_touchProcessor.TouchEnded();
+    }
+
+private:
+    Point<long> TouchToScreen(Point<long> touchPt)
+    {
+        Point<long> avgPt = m_touchProcessor.Update(touchPt);
+        Point<long> screenPt = m_coordMapper.TouchToScreenCoords(avgPt);
+        return screenPt;
+    }
+};
+
 TouchpadManager *g_touchpadManager = nullptr;
-TouchProcessor g_touchProcessor;
-CoordinateMapper g_coordinateMapper;
+TouchCallbackImpl *g_touchCallback = nullptr;
 bool g_touchpadEnabledModified = false;
-bool g_debugMode = false;
 
 void PrintUsage()
 {
     std::cerr << "usage: AbsoluteTouch.exe <args>\n";
-    std::cerr << "  -t x1,y1,x2,y2  Sets the mapped touchpad region\n";
-    std::cerr << "  -s x1,y1,x2,y2  Sets the mapped screen region\n";
-    std::cerr << "  -w weight       Sets the touch smoothing factor (0 to 1, 0 = no smoothing)\n";
-    std::cerr << "  -m              Enables the touchpad on start, disables it on exit\n";
-    std::cerr << "  -d              Enables debug mode (may reduce performance)" << std::endl;
+    std::cerr << "  -t x1,y1,x2,y2  Mapped touchpad region\n";
+    std::cerr << "  -s x1,y1,x2,y2  Mapped screen region\n";
+    std::cerr << "  -w weight       Touch smoothing factor\n";
+    std::cerr << "  -c              Enable click input\n";
+    std::cerr << "  -m              Enable/disable the touchpad on start/exit\n";
+    std::cerr << std::flush;
 }
 
 void CleanUp()
@@ -47,61 +87,41 @@ void CleanUp()
         std::cout << "Released exclusive touchpad access" << std::endl;
 
         delete g_touchpadManager;
+        g_touchpadManager = nullptr;
+    }
+    if (g_touchCallback != nullptr) {
+        delete g_touchCallback;
+        g_touchCallback = nullptr;
     }
 }
 
 BOOL WINAPI OnConsoleSignal(DWORD signal)
 {
-    if (signal == CTRL_C_EVENT || signal == CTRL_CLOSE_EVENT)
+    switch (signal) {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_CLOSE_EVENT:
         CleanUp();
+        break;
+    }
     return FALSE;
 }
 
-void SendCursorInput(Point<int> screenPt)
-{
-    INPUT input[1];
-    input[0].type = INPUT_MOUSE;
-    input[0].mi.dx = screenPt.x;
-    input[0].mi.dy = screenPt.y;
-    input[0].mi.mouseData = 0;
-    input[0].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-    input[0].mi.time = 0;
-    SendInput(1, input, sizeof(INPUT));
-}
-
-void OnTouch(TouchEvent e)
-{
-    if (!e.touching) {
-        g_touchProcessor.TouchEnded();
-    } else {
-        Point<long> averagedPt = g_touchProcessor.Update(e.point);
-        Point<int> screenPt = g_coordinateMapper.TouchpadToScreenCoords(averagedPt);
-        SendCursorInput(screenPt);
-        if (g_debugMode) {
-            std::cout << "Touch event:\n";
-            std::cout << "  Raw touch point: " << e.point << '\n';
-            std::cout << "  Averaged touch point: " << averagedPt << '\n';
-            std::cout << "  Target screen point: " << screenPt << std::endl;
-        }
-    }
-}
-
-template <typename T>
-bool ParseRect(const std::string &str, Rect<T> *out)
+bool ParseRect(const std::string &str, Rect<int> *out)
 {
     std::regex re("(\\d+),(\\d+),(\\d+),(\\d+)");
     std::smatch match;
     if (!std::regex_match(str, match, re))
         return false;
-    T x1, y1, x2, y2;
+    int x1, y1, x2, y2;
     try {
         x1 = std::stoi(match[1].str());
         y1 = std::stoi(match[2].str());
         x2 = std::stoi(match[3].str());
         y2 = std::stoi(match[4].str());
-    } catch (const std::invalid_argument&) {
+    } catch (const std::invalid_argument &) {
         return false;
-    } catch (const std::out_of_range&) {
+    } catch (const std::out_of_range &) {
         return false;
     }
     if (x1 > x2)
@@ -115,48 +135,55 @@ bool ParseRect(const std::string &str, Rect<T> *out)
     return true;
 }
 
-bool ParsePercentage(const std::string &str, float *out)
+bool ParsePercent(const std::string &str, int *out)
 {
-    float value;
+    int value;
     try {
-        value = std::stof(str);
-    } catch (const std::invalid_argument&) {
+        value = std::stoi(str);
+    } catch (const std::invalid_argument &) {
         return false;
-    } catch (const std::out_of_range&) {
+    } catch (const std::out_of_range &) {
         return false;
     }
-    if (value < 0.0f || value > 1.0f)
+    if (value < 0 || value > 100)
         return false;
     *out = value;
     return true;
 }
 
+Rect<long> RelativeToAbsoluteRect(Rect<long> base, Rect<int> scale)
+{
+    Rect<long> ret;
+    ret.x1 = base.x1 + base.width() * scale.x1 / 100;
+    ret.x2 = base.x1 + base.width() * scale.x2 / 100;
+    ret.y1 = base.y1 + base.height() * scale.y1 / 100;
+    ret.y2 = base.y1 + base.height() * scale.y2 / 100;
+    return ret;
+}
+
 int main(int argc, char *argv[])
 {
     // Parse command-line args
-    bool setScreenRect = false;
-    bool setTouchpadRect = false;
-    Rect<int> screenRect;
-    Rect<long> touchpadRect;
+    Rect<int> screenRect(0, 0, 100, 100);
+    Rect<int> touchpadRect(0, 0, 100, 100);
     bool manageTouchpad = false;
-    float smoothingWeight = 0.0f;
+    bool sendClicks = false;
+    int smoothingWeight = 0;
     for (int i = 1; i < argc; ++i) {
         bool valid = true;
         if (std::strcmp(argv[i], "-t") == 0 && i < argc - 1) {
             if (!ParseRect(argv[++i], &touchpadRect))
                 valid = false;
-            setTouchpadRect = true;
         } else if (std::strcmp(argv[i], "-s") == 0 && i < argc - 1) {
             if (!ParseRect(argv[++i], &screenRect))
                 valid = false;
-            setScreenRect = true;
         } else if (std::strcmp(argv[i], "-w") == 0 && i < argc - 1) {
-            if (!ParsePercentage(argv[++i], &smoothingWeight))
+            if (!ParsePercent(argv[++i], &smoothingWeight))
                 valid = false;
         } else if (std::strcmp(argv[i], "-m") == 0) {
             manageTouchpad = true;
-        } else if (std::strcmp(argv[i], "-d") == 0) {
-            g_debugMode = true;
+        } else if (std::strcmp(argv[i], "-c") == 0) {
+            sendClicks = true;
         } else {
             valid = false;
         }
@@ -173,37 +200,27 @@ int main(int argc, char *argv[])
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << "Starting..." << std::endl;
 
-    // Heap-alloc to allow custom lifecycle management
-    g_touchpadManager = new TouchpadManager;
+    // Initialize COM
+    CCoInitialize init;
 
-    // Initialize touchpad manager
-    if (!g_touchpadManager->Initialize()) {
+    // Set cleanup handler
+    if (!SetConsoleCtrlHandler(OnConsoleSignal, TRUE)) {
+        std::cerr << "Error: failed to register console control handler" << std::endl;
+        CleanUp();
+        return 1;
+    }
+    std::cout << "Registered console control handler" << std::endl;
+
+    // Heap-alloc to allow custom lifecycle management
+    try {
+        g_touchpadManager = new TouchpadManager();
+    } catch (const TouchpadInitException &e) {
         std::cerr << "Error: could not initialize touchpad manager" << std::endl;
+        std::cerr << e.what() << std::endl;
         CleanUp();
         return 1;
     }
     std::cout << "Initialized touchpad manager" << std::endl;
-
-    // Set touch smoothing weight
-    g_touchProcessor.SetWeight(smoothingWeight);
-    std::cout << "Touch smoothing weight factor: " << smoothingWeight << std::endl;
-
-    // Get touchpad dimensions
-    if (!setTouchpadRect) {
-        touchpadRect = g_touchpadManager->GetDefaultTouchpadRect();
-    }
-    std::cout << "Touchpad area: " << touchpadRect << std::endl;
-    g_coordinateMapper.SetTouchpadRect(touchpadRect);
-
-    // Get screen dimensions
-    if (!setScreenRect) {
-        screenRect.x1 = 0;
-        screenRect.y1 = 0;
-        screenRect.x2 = GetSystemMetrics(SM_CXSCREEN) - 1;
-        screenRect.y2 = GetSystemMetrics(SM_CYSCREEN) - 1;
-    }
-    std::cout << "Screen area: " << screenRect << std::endl;
-    g_coordinateMapper.SetScreenRect(screenRect);
 
     // Acquire exclusive touchpad access
     if (!g_touchpadManager->Acquire()) {
@@ -213,24 +230,24 @@ int main(int argc, char *argv[])
     }
     std::cout << "Acquired exclusive touchpad access" << std::endl;
 
+    Rect<long> screenRectAbs = RelativeToAbsoluteRect(Rect<long>(0, 0, 65535, 65535), screenRect);
+    Rect<long> touchRectAbs = RelativeToAbsoluteRect(g_touchpadManager->GetTouchpadRect(), touchpadRect);
+
     // Register touchpad touch callback
-    g_touchpadManager->SetTouchCallback(OnTouch);
+    g_touchCallback = new TouchCallbackImpl();
+    g_touchCallback->m_coordMapper.SetScreenRect(screenRectAbs);
+    g_touchCallback->m_coordMapper.SetTouchpadRect(touchRectAbs);
+    g_touchCallback->m_touchProcessor.SetWeight(smoothingWeight);
+    g_touchCallback->m_sendClick = sendClicks;
+    g_touchpadManager->SetTouchCallback(g_touchCallback);
     std::cout << "Registered touch listener" << std::endl;
 
-    // Enable touchpad if -t flag was specified
+    // Enable touchpad if option was specified
     if (manageTouchpad && !g_touchpadManager->IsTouchpadEnabled()) {
         g_touchpadManager->SetTouchpadEnabled(true);
         g_touchpadEnabledModified = true;
         std::cout << "Enabled touchpad" << std::endl;
     }
-
-    // Set cleanup handler
-    if (!SetConsoleCtrlHandler(OnConsoleSignal, TRUE)) {
-        std::cerr << "Error: failed to register console control handler" << std::endl;
-        CleanUp();
-        return 1;
-    }
-    std::cout << "Registered console control handler" << std::endl;
 
     // Print usage instructions
     std::cout << "--------------------------------------------------" << std::endl;
@@ -241,13 +258,9 @@ int main(int argc, char *argv[])
     // Main message loop
     MSG msg;
     BOOL ret;
-    while ((ret = GetMessage(&msg, nullptr, 0, 0)) != 0) {
-        if (ret == -1) {
-            break;
-        } else {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
+    while ((ret = GetMessage(&msg, nullptr, 0, 0)) > 0) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
     CleanUp();

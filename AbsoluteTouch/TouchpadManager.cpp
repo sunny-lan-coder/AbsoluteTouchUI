@@ -1,35 +1,31 @@
 #include "TouchpadManager.h"
 #include <cassert>
 
-bool TouchpadManager::Initialize()
+#define ASSERT_OK(x) if ((x) != SYN_OK) assert(false);
+
+TouchpadManager::TouchpadManager()
 {
-    assert(!m_coinitialized);
-    HRESULT res = CoInitialize(nullptr);
-    if (res != S_OK && res != S_FALSE)
-        return false;
-    m_coinitialized = true;
-    if (CoCreateInstance(_uuidof(SynAPI), nullptr, CLSCTX_INPROC_SERVER, _uuidof(ISynAPI), (void **)&m_api) != S_OK)
-        return false;
-    if (m_api->Initialize() != SYN_OK)
-        return false;
+    if (CoCreateInstance(__uuidof(SynAPI), nullptr, CLSCTX_INPROC_SERVER, __uuidof(ISynAPI), (void **)&m_api) != S_OK)
+        throw TouchpadInitException("Could not create SynAPI instance");
+    if (m_api->Initialize() != SYN_OK) {
+        m_api->Release();
+        throw TouchpadInitException("Could not initialize SynAPI (missing kernel drivers?)");
+    }
     long handle = -1;
-    if (m_api->FindDevice(SE_ConnectionAny, SE_DeviceTouchPad, &handle) != SYN_OK)
-        return false;
-    if (m_api->CreateDevice(handle, &m_device) != SYN_OK)
-        return false;
-    if (m_device->CreatePacket(&m_packet) != SYN_OK)
-        return false;
-    m_device->GetProperty(SP_XLoSensor, &m_bounds.x1);
-    m_device->GetProperty(SP_XHiSensor, &m_bounds.x2);
-    m_device->GetProperty(SP_YLoSensor, &m_bounds.y1);
-    m_device->GetProperty(SP_YHiSensor, &m_bounds.y2);
-    m_initialized = true;
-    return true;
+    if (m_api->FindDevice(SE_ConnectionAny, SE_DeviceTouchPad, &handle) != SYN_OK) {
+        m_api->Release();
+        throw TouchpadInitException("Could not find any touchpad devices");
+    }
+    ASSERT_OK(m_api->CreateDevice(handle, &m_device));
+    ASSERT_OK(m_device->CreatePacket(&m_packet));
+    ASSERT_OK(m_device->GetProperty(SP_XLoSensor, &m_bounds.x1));
+    ASSERT_OK(m_device->GetProperty(SP_XHiSensor, &m_bounds.x2));
+    ASSERT_OK(m_device->GetProperty(SP_YLoSensor, &m_bounds.y1));
+    ASSERT_OK(m_device->GetProperty(SP_YHiSensor, &m_bounds.y2));
 }
 
 bool TouchpadManager::Acquire()
 {
-    assert(m_initialized);
     if (m_acquired)
         return true;
     if (m_device->Acquire(0) != SYN_OK)
@@ -40,51 +36,41 @@ bool TouchpadManager::Acquire()
 
 void TouchpadManager::Unacquire()
 {
-    assert(m_initialized);
     if (!m_acquired)
         return;
-    HRESULT res = m_device->Unacquire();
-    assert(res == SYN_OK);
+    ASSERT_OK(m_device->Unacquire());
     m_acquired = false;
 }
 
-void TouchpadManager::SetTouchCallback(TouchCallback callback)
+void TouchpadManager::SetTouchCallback(TouchCallback *callback)
 {
     if (callback != nullptr && m_callback == nullptr) {
-        HRESULT res = m_device->SetSynchronousNotification(this);
-        assert(res == SYN_OK);
+        ASSERT_OK(m_device->SetSynchronousNotification(this));
     } else if (callback == nullptr && m_callback != nullptr) {
-        HRESULT res = m_device->SetSynchronousNotification(nullptr);
-        assert(res == SYN_OK);
+        ASSERT_OK(m_device->SetSynchronousNotification(nullptr));
     }
     m_callback = callback;
 }
 
 bool TouchpadManager::IsTouchpadEnabled()
 {
-    assert(m_initialized);
     HRESULT out;
-    HRESULT res = m_device->GetProperty(SP_DisableState, &out);
-    assert(res == SYN_OK);
-    assert(out == SYN_FALSE || out == SYN_TRUE);
+    ASSERT_OK(m_device->GetProperty(SP_DisableState, &out));
     return (out == SYN_FALSE);
 }
 
 void TouchpadManager::SetTouchpadEnabled(bool enabled)
 {
-    assert(m_initialized);
-    HRESULT res = m_device->SetProperty(SP_DisableState, enabled ? SYN_FALSE : SYN_TRUE);
-    assert(res == SYN_OK);
+    ASSERT_OK(m_device->SetProperty(SP_DisableState, enabled ? SYN_FALSE : SYN_TRUE));
 }
 
-Rect<long> TouchpadManager::GetDefaultTouchpadRect()
+Rect<long> TouchpadManager::GetTouchpadRect()
 {
-    assert(m_initialized);
     long minX, maxX, minY, maxY;
-    m_device->GetProperty(SP_XLoBorder, &minX);
-    m_device->GetProperty(SP_XHiBorder, &maxX);
-    m_device->GetProperty(SP_YLoBorder, &minY);
-    m_device->GetProperty(SP_YHiBorder, &maxY);
+    ASSERT_OK(m_device->GetProperty(SP_XLoBorder, &minX));
+    ASSERT_OK(m_device->GetProperty(SP_XHiBorder, &maxX));
+    ASSERT_OK(m_device->GetProperty(SP_YLoBorder, &minY));
+    ASSERT_OK(m_device->GetProperty(SP_YHiBorder, &maxY));
     Point<long> topLeft = NormalizeCoordinates(minX, maxY);
     Point<long> bottomRight = NormalizeCoordinates(maxX, minY);
     return Rect<long>(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
@@ -99,36 +85,38 @@ Point<long> TouchpadManager::NormalizeCoordinates(long x, long y)
 
 HRESULT STDMETHODCALLTYPE TouchpadManager::OnSynDevicePacket(long seqNum)
 {
-    assert(m_initialized);
     HRESULT res = m_device->LoadPacket(m_packet);
     if (res != SYN_OK && res != SYNE_SEQUENCE)
         return res;
-    if (m_callback != nullptr) {
-        TouchEvent e;
-        long fingerState;
-        m_packet->GetProperty(SP_FingerState, &fingerState);
-        e.touching = (fingerState & SF_FingerPresent) != 0;
-        if (e.touching) {
-            long x, y;
-            m_packet->GetProperty(SP_XRaw, &x);
-            m_packet->GetProperty(SP_YRaw, &y);
-            e.point = NormalizeCoordinates(x, y);
+    if (m_callback == nullptr)
+        return SYN_OK;
+    long fingerState;
+    m_packet->GetProperty(SP_FingerState, &fingerState);
+    bool touching = (fingerState & SF_FingerPresent) != 0;
+    if (touching) {
+        long x, y;
+        Point<long> point;
+        m_packet->GetProperty(SP_XRaw, &x);
+        m_packet->GetProperty(SP_YRaw, &y);
+        point = NormalizeCoordinates(x, y);
+        if (m_touching) {
+            m_callback->OnTouchMoved(point);
+        } else {
+            m_callback->OnTouchStarted(point);
+            m_touching = true;
         }
-        m_callback(e);
+    } else if (m_touching) {
+        m_callback->OnTouchEnded();
+        m_touching = false;
     }
     return SYN_OK;
 }
 
 TouchpadManager::~TouchpadManager()
 {
-    if (m_initialized) {
-        SetTouchCallback(nullptr);
-        Unacquire();
-    }
-    if (m_coinitialized) {
-        if (m_packet != nullptr) m_packet->Release();
-        if (m_device != nullptr) m_device->Release();
-        if (m_api != nullptr) m_api->Release();
-        CoUninitialize();
-    }
+    SetTouchCallback(nullptr);
+    Unacquire();
+    m_packet->Release();
+    m_device->Release();
+    m_api->Release();
 }

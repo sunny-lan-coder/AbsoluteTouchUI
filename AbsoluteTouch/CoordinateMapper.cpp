@@ -1,26 +1,40 @@
 #include "CoordinateMapper.h"
 
-void CoordinateMapper::SetTouchpadRect(Rect<long> rect)
+void CoordinateMapper::SetTouchpadRect(Rect<long> touchRect)
 {
-    m_touchpadRect = rect;
+    m_touchpadRect = touchRect;
 }
 
-void CoordinateMapper::SetScreenRect(Rect<int> rect)
+void CoordinateMapper::SetScreenRect(Rect<long> screenRect)
 {
-    m_screenRect = rect;
+    m_screenRect = screenRect;
 }
 
-Point<int> CoordinateMapper::TouchpadToScreenCoords(Point<long> touchpadCoords)
+Point<long> CoordinateMapper::ClampTouchPoint(Point<long> touchPoint)
 {
-    long tpWidth = m_touchpadRect.x2 - m_touchpadRect.x1 + 1;
-    long tpHeight = m_touchpadRect.y2 - m_touchpadRect.y1 + 1;
-    int scWidth = m_screenRect.x2 - m_screenRect.x1 + 1;
-    int scHeight = m_screenRect.y2 - m_screenRect.y1 + 1;
-    long tpDeltaX = touchpadCoords.x - m_touchpadRect.x1;
-    long tpDeltaY = touchpadCoords.y - m_touchpadRect.y1;
-    int scDeltaX = (int)(tpDeltaX * scWidth / tpWidth);
-    int scDeltaY = (int)(tpDeltaY * scHeight / tpHeight);
-    int screenX = m_screenRect.x1 + scDeltaX;
-    int screenY = m_screenRect.y1 + scDeltaY;
-    return Point<int>(screenX * 65535 / scWidth, screenY * 65535 / scHeight);
+    if (touchPoint.x < m_touchpadRect.x1)
+        touchPoint.x = m_touchpadRect.x1;
+    if (touchPoint.x > m_touchpadRect.x2)
+        touchPoint.x = m_touchpadRect.x2;
+    if (touchPoint.y < m_touchpadRect.y1)
+        touchPoint.y = m_touchpadRect.y1;
+    if (touchPoint.y > m_touchpadRect.y2)
+        touchPoint.y = m_touchpadRect.y2;
+    return touchPoint;
+}
+
+Point<long> CoordinateMapper::TouchToScreenCoords(Point<long> touchPoint)
+{
+    Point<long> clampedTouchPoint = ClampTouchPoint(touchPoint);
+    long tpWidth = m_touchpadRect.width();
+    long tpHeight = m_touchpadRect.height();
+    long scWidth = m_screenRect.width();
+    long scHeight = m_screenRect.height();
+    long tpDeltaX = clampedTouchPoint.x - m_touchpadRect.x1;
+    long tpDeltaY = clampedTouchPoint.y - m_touchpadRect.y1;
+    long scDeltaX = tpDeltaX * scWidth / tpWidth;
+    long scDeltaY = tpDeltaY * scHeight / tpHeight;
+    long screenX = m_screenRect.x1 + scDeltaX;
+    long screenY = m_screenRect.y1 + scDeltaY;
+    return Point<long>(screenX, screenY);
 }

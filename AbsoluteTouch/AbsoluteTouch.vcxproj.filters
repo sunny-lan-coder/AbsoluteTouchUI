@@ -41,6 +41,9 @@
     <ClInclude Include="TouchProcessor.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="InputHelper.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TouchpadManager.cpp">
@@ -53,6 +56,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TouchProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CCoInitialize.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

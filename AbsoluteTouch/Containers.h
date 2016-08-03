@@ -13,6 +13,16 @@ struct Rect
 
     Rect() = default;
     Rect(T x1, T y1, T x2, T y2) : x1(x1), y1(y1), x2(x2), y2(y2) { }
+
+    T width()
+    {
+        return x2 - x1;
+    }
+
+    T height()
+    {
+        return y2 - y1;
+    }
 };
 
 template <typename T>

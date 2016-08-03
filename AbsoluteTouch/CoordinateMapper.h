@@ -6,13 +6,14 @@
 class CoordinateMapper
 {
 public:
-    Point<int> TouchpadToScreenCoords(Point<long> touchpadCoords);
+    Point<long> TouchToScreenCoords(Point<long> touchPoint);
     void SetTouchpadRect(Rect<long> rect);
-    void SetScreenRect(Rect<int> rect);
+    void SetScreenRect(Rect<long> rect);
 
 private:
+    Point<long> ClampTouchPoint(Point<long> touchPoint);
     Rect<long> m_touchpadRect;
-    Rect<int> m_screenRect;
+    Rect<long> m_screenRect;
 };
 
 #endif
