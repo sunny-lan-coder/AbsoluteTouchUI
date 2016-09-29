@@ -23,6 +23,16 @@ struct Rect
     {
         return y2 - y1;
     }
+
+    Rect<T> scale(Rect<int> scale)
+    {
+        Rect<long> ret;
+        ret.x1 = x1 + width() * scale.x1 / 100;
+        ret.x2 = x1 + width() * scale.x2 / 100;
+        ret.y1 = y1 + height() * scale.y1 / 100;
+        ret.y2 = y1 + height() * scale.y2 / 100;
+        return ret;
+    }
 };
 
 template <typename T>

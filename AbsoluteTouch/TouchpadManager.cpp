@@ -9,11 +9,13 @@ TouchpadManager::TouchpadManager()
         throw TouchpadInitException("Could not create SynAPI instance");
     if (m_api->Initialize() != SYN_OK) {
         m_api->Release();
+        m_api = nullptr;
         throw TouchpadInitException("Could not initialize SynAPI (missing kernel drivers?)");
     }
     long handle = -1;
     if (m_api->FindDevice(SE_ConnectionAny, SE_DeviceTouchPad, &handle) != SYN_OK) {
         m_api->Release();
+        m_api = nullptr;
         throw TouchpadInitException("Could not find any touchpad devices");
     }
     ASSERT_OK(m_api->CreateDevice(handle, &m_device));

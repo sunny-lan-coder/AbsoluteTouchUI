@@ -40,7 +40,6 @@ private:
     ISynPacket *m_packet = nullptr;
     TouchCallback *m_callback = nullptr;
     Rect<long> m_bounds;
-    bool m_initialized = false;
     bool m_acquired = false;
     bool m_touching = false;
 };
