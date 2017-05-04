@@ -135,6 +135,9 @@ namespace AbsoluteUI
 
         private void btnExit_Click(object sender, EventArgs e)
         {
+            stop();
+            hk.ClearHotkeys();
+            registered = false;
             this.Close();
             Application.Exit();
             Environment.Exit(0);
@@ -144,9 +147,6 @@ namespace AbsoluteUI
         {
             this.Hide();
             e.Cancel = true;
-            hk.ClearHotkeys();
-            registered = false;
-            stop();
         }
 
         private void notifyIcon1_DoubleClick(object sender, EventArgs e)
