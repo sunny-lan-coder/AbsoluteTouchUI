@@ -20,12 +20,37 @@ namespace AbsoluteUI
             InitializeComponent();
         }
 
+        bool doHide = false;
+
         private void Form1_Load(object sender, EventArgs e)
         {
             hk = new KeyboardHook();
             hk.KeyPressed += hotKeyPressed;
             txtCmb.GotFocus += txtFocused;
             txtCmb.LostFocus += txtLostFocus;
+
+            try
+            {
+                Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+                mod = (ModifierKeys)Convert.ToUInt32(exampleRegistryKey.GetValue("Modifier"));
+                t = (Keys)Convert.ToInt32(exampleRegistryKey.GetValue("Keys"));
+                tX.Value =Convert.ToDecimal( exampleRegistryKey.GetValue("tX"));
+                tY.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("tY"));
+                tW.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("tW"));
+                tH.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("tH"));
+                sX.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("sX"));
+                sY.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("sY"));
+                sW.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("sW"));
+                sH.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("sH"));
+                w.Value = Convert.ToDecimal(exampleRegistryKey.GetValue("w"));
+                chkL.Checked = Convert.ToBoolean(exampleRegistryKey.GetValue("chkL"));
+                register();
+                doHide = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Could not load keys");
+            }
         }
 
         private bool registered = false;
@@ -39,7 +64,12 @@ namespace AbsoluteUI
         {
             if (t != null && !registered)
             {
+                Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+                exampleRegistryKey.SetValue("Modifier", (uint)mod);
+                exampleRegistryKey.SetValue("Keys", (int)t);
+
                 hk.RegisterHotKey(mod, t ?? default(Keys));
+                exampleRegistryKey.Close();
                 registered = true;
             }
         }
@@ -158,6 +188,103 @@ namespace AbsoluteUI
         {
             register();
             btnToggle.Focus();
+        }
+
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            if (doHide)
+                Hide();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Rectangle r = RegionSelector.showDialog(tX.Value,tY.Value, tW.Value, tH.Value);
+            tX.Value = r.X;
+            tY.Value = r.Y;
+            tW.Value = r.Width;
+            tH.Value = r.Height;
+            
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Rectangle r = RegionSelector.showDialog(sX.Value, sY.Value, sW.Value, sH.Value);
+            sX.Value = r.X;
+            sY.Value = r.Y;
+            sW.Value = r.Width;
+            sH.Value = r.Height;
+        }
+
+        private void tX_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("tX", tX.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void tY_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("tY", tY.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void tW_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("tW", tW.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void tH_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("tH", tH.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void sX_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("sX", sX.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void sY_ValueChanged(object sender, EventArgs e)
+        {
+
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("sY", sY.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void sW_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("sW", sW.Value);
+            exampleRegistryKey.Close();
+
+        }
+
+        private void sH_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("sH", sH.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void w_ValueChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("w", w.Value);
+            exampleRegistryKey.Close();
+        }
+
+        private void chkL_CheckedChanged(object sender, EventArgs e)
+        {
+            Microsoft.Win32.RegistryKey exampleRegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("AbsoluteTouch");
+            exampleRegistryKey.SetValue("chkL", chkL.Checked);
+            exampleRegistryKey.Close();
         }
     }
 }

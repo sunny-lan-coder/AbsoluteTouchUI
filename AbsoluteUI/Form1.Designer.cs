@@ -56,6 +56,8 @@
             this.w = new System.Windows.Forms.NumericUpDown();
             this.label12 = new System.Windows.Forms.Label();
             this.chkL = new System.Windows.Forms.CheckBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.tX)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.tY)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.tW)).BeginInit();
@@ -78,7 +80,7 @@
             // 
             this.btnToggle.Location = new System.Drawing.Point(12, 12);
             this.btnToggle.Name = "btnToggle";
-            this.btnToggle.Size = new System.Drawing.Size(377, 99);
+            this.btnToggle.Size = new System.Drawing.Size(458, 99);
             this.btnToggle.TabIndex = 0;
             this.btnToggle.Text = "Start";
             this.btnToggle.UseVisualStyleBackColor = true;
@@ -88,7 +90,7 @@
             // 
             this.btnExit.Location = new System.Drawing.Point(15, 340);
             this.btnExit.Name = "btnExit";
-            this.btnExit.Size = new System.Drawing.Size(377, 50);
+            this.btnExit.Size = new System.Drawing.Size(455, 50);
             this.btnExit.TabIndex = 1;
             this.btnExit.Text = "Exit";
             this.btnExit.UseVisualStyleBackColor = true;
@@ -98,7 +100,7 @@
             // 
             this.txtCmb.Location = new System.Drawing.Point(15, 143);
             this.txtCmb.Name = "txtCmb";
-            this.txtCmb.Size = new System.Drawing.Size(374, 20);
+            this.txtCmb.Size = new System.Drawing.Size(455, 20);
             this.txtCmb.TabIndex = 3;
             this.txtCmb.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCmb_KeyDown);
             this.txtCmb.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtCmb_KeyUp);
@@ -108,7 +110,7 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 125);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(143, 15);
+            this.label1.Size = new System.Drawing.Size(126, 13);
             this.label1.TabIndex = 4;
             this.label1.Text = "Toggle key combination: ";
             // 
@@ -117,7 +119,7 @@
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(12, 184);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(145, 15);
+            this.label2.Size = new System.Drawing.Size(126, 13);
             this.label2.TabIndex = 5;
             this.label2.Text = "Mapped touchpad region";
             // 
@@ -126,7 +128,7 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(12, 206);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(18, 15);
+            this.label3.Size = new System.Drawing.Size(17, 13);
             this.label3.TabIndex = 6;
             this.label3.Text = "X:";
             // 
@@ -136,6 +138,7 @@
             this.tX.Name = "tX";
             this.tX.Size = new System.Drawing.Size(54, 20);
             this.tX.TabIndex = 7;
+            this.tX.ValueChanged += new System.EventHandler(this.tX_ValueChanged);
             // 
             // tY
             // 
@@ -143,13 +146,14 @@
             this.tY.Name = "tY";
             this.tY.Size = new System.Drawing.Size(54, 20);
             this.tY.TabIndex = 9;
+            this.tY.ValueChanged += new System.EventHandler(this.tY_ValueChanged);
             // 
             // label4
             // 
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(102, 206);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(17, 15);
+            this.label4.Size = new System.Drawing.Size(17, 13);
             this.label4.TabIndex = 8;
             this.label4.Text = "Y:";
             // 
@@ -164,13 +168,14 @@
             0,
             0,
             0});
+            this.tW.ValueChanged += new System.EventHandler(this.tW_ValueChanged);
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(196, 206);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(21, 15);
+            this.label5.Size = new System.Drawing.Size(21, 13);
             this.label5.TabIndex = 10;
             this.label5.Text = "W:";
             // 
@@ -185,13 +190,14 @@
             0,
             0,
             0});
+            this.tH.ValueChanged += new System.EventHandler(this.tH_ValueChanged);
             // 
             // label6
             // 
             this.label6.AutoSize = true;
             this.label6.Location = new System.Drawing.Point(295, 206);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(19, 15);
+            this.label6.Size = new System.Drawing.Size(18, 13);
             this.label6.TabIndex = 12;
             this.label6.Text = "H:";
             // 
@@ -206,13 +212,14 @@
             0,
             0,
             0});
+            this.sH.ValueChanged += new System.EventHandler(this.sH_ValueChanged);
             // 
             // label7
             // 
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(295, 261);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(19, 15);
+            this.label7.Size = new System.Drawing.Size(18, 13);
             this.label7.TabIndex = 21;
             this.label7.Text = "H:";
             // 
@@ -227,13 +234,14 @@
             0,
             0,
             0});
+            this.sW.ValueChanged += new System.EventHandler(this.sW_ValueChanged);
             // 
             // label8
             // 
             this.label8.AutoSize = true;
             this.label8.Location = new System.Drawing.Point(196, 261);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(21, 15);
+            this.label8.Size = new System.Drawing.Size(21, 13);
             this.label8.TabIndex = 19;
             this.label8.Text = "W:";
             // 
@@ -243,13 +251,14 @@
             this.sY.Name = "sY";
             this.sY.Size = new System.Drawing.Size(54, 20);
             this.sY.TabIndex = 18;
+            this.sY.ValueChanged += new System.EventHandler(this.sY_ValueChanged);
             // 
             // label9
             // 
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(102, 261);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(17, 15);
+            this.label9.Size = new System.Drawing.Size(17, 13);
             this.label9.TabIndex = 17;
             this.label9.Text = "Y:";
             // 
@@ -259,13 +268,14 @@
             this.sX.Name = "sX";
             this.sX.Size = new System.Drawing.Size(54, 20);
             this.sX.TabIndex = 16;
+            this.sX.ValueChanged += new System.EventHandler(this.sX_ValueChanged);
             // 
             // label10
             // 
             this.label10.AutoSize = true;
             this.label10.Location = new System.Drawing.Point(12, 261);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(18, 15);
+            this.label10.Size = new System.Drawing.Size(17, 13);
             this.label10.TabIndex = 15;
             this.label10.Text = "X:";
             // 
@@ -274,7 +284,7 @@
             this.label11.AutoSize = true;
             this.label11.Location = new System.Drawing.Point(12, 239);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(131, 15);
+            this.label11.Size = new System.Drawing.Size(113, 13);
             this.label11.TabIndex = 14;
             this.label11.Text = "Mapped screen region";
             // 
@@ -284,13 +294,14 @@
             this.w.Name = "w";
             this.w.Size = new System.Drawing.Size(54, 20);
             this.w.TabIndex = 24;
+            this.w.ValueChanged += new System.EventHandler(this.w_ValueChanged);
             // 
             // label12
             // 
             this.label12.AutoSize = true;
             this.label12.Location = new System.Drawing.Point(12, 306);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(103, 15);
+            this.label12.Size = new System.Drawing.Size(90, 13);
             this.label12.TabIndex = 23;
             this.label12.Text = "Smoothing factor:";
             // 
@@ -299,17 +310,40 @@
             this.chkL.AutoSize = true;
             this.chkL.Location = new System.Drawing.Point(199, 304);
             this.chkL.Name = "chkL";
-            this.chkL.Size = new System.Drawing.Size(161, 19);
+            this.chkL.Size = new System.Drawing.Size(146, 17);
             this.chkL.TabIndex = 25;
             this.chkL.Text = "Enable left click on touch";
             this.chkL.UseVisualStyleBackColor = true;
+            this.chkL.CheckedChanged += new System.EventHandler(this.chkL_CheckedChanged);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(399, 198);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(71, 29);
+            this.button1.TabIndex = 26;
+            this.button1.Text = "Select";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(399, 253);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(71, 28);
+            this.button2.TabIndex = 27;
+            this.button2.Text = "Select";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(401, 402);
+            this.ClientSize = new System.Drawing.Size(482, 402);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.chkL);
             this.Controls.Add(this.w);
             this.Controls.Add(this.label12);
@@ -341,6 +375,7 @@
             this.Text = "AbsoluteTouch control";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.Shown += new System.EventHandler(this.Form1_Shown);
             ((System.ComponentModel.ISupportInitialize)(this.tX)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.tY)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.tW)).EndInit();
@@ -383,6 +418,8 @@
         private System.Windows.Forms.NumericUpDown w;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.CheckBox chkL;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
     }
 }
 
